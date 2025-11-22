@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Void Breacher</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-    <div id="threeBackground"></div>
-    
     <div id="gameContainer">
         <!-- Game Canvas - Always Visible -->
         <canvas id="gameCanvas"></canvas>
@@ -22,12 +19,6 @@
                 <div id="score" class="value">0</div>
             </div>
 
-            <!-- Wave Display -->
-            <div id="waveDisplay" class="ui-element">
-                <div class="label">WAVE</div>
-                <div id="wave" class="value">1</div>
-            </div>
-
             <!-- Health Display -->
             <div id="healthDisplay" class="ui-element">
                 <div class="label">HEALTH</div>
@@ -35,6 +26,18 @@
                     <div id="healthBar" class="health-fill"></div>
                 </div>
                 <div id="healthText">100%</div>
+            </div>
+
+            <!-- Wave Display -->
+            <div id="waveDisplay" class="ui-element">
+                <div class="label">WAVE</div>
+                <div id="wave" class="value">1</div>
+            </div>
+
+            <!-- High Score Display -->
+            <div id="highScoreDisplay" class="ui-element">
+                <div class="label">BEST</div>
+                <div id="highScore" class="value">0</div>
             </div>
 
             <!-- Game Control Buttons -->
@@ -59,12 +62,6 @@
                     <span class="btn-text">FULLSCREEN</span>
                 </button>
             </div>
-
-            <!-- High Score Display -->
-            <div id="highScoreDisplay" class="ui-element">
-                <div class="label">BEST</div>
-                <div id="highScore" class="value">0</div>
-            </div>
         </div>
 
         <!-- Game Over Overlay -->
@@ -83,6 +80,13 @@
                 </div>
                 <button id="playAgainBtn" class="action-btn">PLAY AGAIN</button>
             </div>
+        </div>
+
+        <!-- Instructions -->
+        <div id="instructions" class="ui-element">
+            <div class="label">CONTROLS</div>
+            <div>WASD: MOVE</div>
+            <div>SPACE: SHOOT</div>
         </div>
     </div>
 
