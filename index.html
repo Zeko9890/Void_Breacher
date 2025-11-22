@@ -5,70 +5,123 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Void Breacher</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
+    <div id="threeBackground"></div>
+    
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         
-        <!-- Game UI -->
-        <div id="ui">
-            <div class="ui-section">
-                <div class="stat">
-                    <div class="label">SCORE</div>
-                    <div id="score" class="value">0</div>
+        <!-- Always Visible Game UI -->
+        <div id="gameUI" class="hidden">
+            <div class="ui-panel left-panel">
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-content">
+                        <div class="label">SCORE</div>
+                        <div id="score" class="value glitch">0</div>
+                    </div>
                 </div>
-                <div class="stat">
-                    <div class="label">WAVE</div>
-                    <div id="wave" class="value">1</div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🌊</div>
+                    <div class="stat-content">
+                        <div class="label">WAVE</div>
+                        <div id="wave" class="value glitch">1</div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="ui-section">
-                <div class="stat">
-                    <div class="label">HEALTH</div>
-                    <div class="health-bar">
-                        <div id="healthBar" class="health-fill"></div>
+
+            <div class="ui-panel right-panel">
+                <div class="stat-card">
+                    <div class="stat-icon">❤️</div>
+                    <div class="stat-content">
+                        <div class="label">HEALTH</div>
+                        <div class="health-container">
+                            <div class="health-bar">
+                                <div id="healthBar" class="health-fill"></div>
+                                <div class="health-glow"></div>
+                            </div>
+                            <div id="healthText" class="health-value">100%</div>
+                        </div>
                     </div>
                 </div>
-                <div class="stat">
-                    <div class="label">DASH</div>
-                    <div class="dash-container">
-                        <div id="dashCooldown" class="dash-ready">READY</div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">🚀</div>
+                    <div class="stat-content">
+                        <div class="label">DASH</div>
+                        <div class="dash-container">
+                            <div id="dashCooldown" class="dash-status ready">
+                                <div class="dash-text">READY</div>
+                                <div class="dash-glow"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- Control Buttons Always Visible -->
+            <div class="control-panel">
+                <button id="pauseButton" class="control-btn pulse">
+                    <span class="btn-icon">⏸️</span>
+                    <span class="btn-text">PAUSE</span>
+                </button>
+                <button id="fullscreenButton" class="control-btn">
+                    <span class="btn-icon">📺</span>
+                    <span class="btn-text">FULLSCREEN</span>
+                </button>
+                <button id="restartButton" class="control-btn">
+                    <span class="btn-icon">🔄</span>
+                    <span class="btn-text">RESTART</span>
+                </button>
             </div>
         </div>
 
         <!-- Main Menu -->
         <div id="mainMenu" class="screen">
             <div class="title-container">
-                <h1 class="game-title">VOID BREACHER</h1>
+                <h1 class="game-title glitch" data-text="VOID BREACHER">VOID BREACHER</h1>
+                <div class="title-sub">NEURAL COMBAT SYSTEM</div>
                 <div class="title-glow"></div>
             </div>
+            
             <div class="menu-buttons">
-                <button id="startButton" class="menu-btn pulse">
-                    <span>START MISSION</span>
+                <button id="startButton" class="menu-btn cyber-button pulse">
+                    <span class="btn-glow"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">🎮</span>
+                        <span class="btn-text">INITIATE COMBAT</span>
+                    </span>
                 </button>
-                <button id="fullscreenButton" class="menu-btn">
-                    <span>FULLSCREEN</span>
+                
+                <button id="highScoresButton" class="menu-btn cyber-button">
+                    <span class="btn-glow"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">🏆</span>
+                        <span class="btn-text">TERMINAL RECORDS</span>
+                    </span>
+                </button>
+                
+                <button id="controlsButton" class="menu-btn cyber-button">
+                    <span class="btn-glow"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">🎯</span>
+                        <span class="btn-text">CONTROL MATRIX</span>
+                    </span>
                 </button>
             </div>
-            <div class="high-score">
-                <div class="label">BEST RECORD</div>
-                <div id="highScore" class="value">0</div>
-            </div>
-            <div class="controls">
-                <div class="control-item">
-                    <span class="key">WASD</span>
-                    <span class="action">MOVE</span>
+
+            <div class="menu-footer">
+                <div class="high-score-display">
+                    <div class="hs-label">MAXIMUM ACHIEVEMENT</div>
+                    <div id="highScore" class="hs-value glitch">0</div>
                 </div>
-                <div class="control-item">
-                    <span class="key">SPACE</span>
-                    <span class="action">SHOOT</span>
-                </div>
-                <div class="control-item">
-                    <span class="key">SHIFT</span>
-                    <span class="action">DASH</span>
+                
+                <div class="version-info">
+                    <div class="version">SYSTEM v2.0.1</div>
+                    <div class="status">ONLINE</div>
                 </div>
             </div>
         </div>
@@ -76,45 +129,134 @@
         <!-- Game Over Screen -->
         <div id="gameOver" class="screen hidden">
             <div class="title-container">
-                <h2 class="game-over-title">MISSION FAILED</h2>
+                <h2 class="game-over-title glitch" data-text="SYSTEM FAILURE">SYSTEM FAILURE</h2>
+                <div class="title-sub">NEURAL LINK TERMINATED</div>
                 <div class="title-glow red"></div>
             </div>
-            <div class="results">
-                <div class="result-item">
-                    <span class="label">FINAL SCORE</span>
-                    <span id="finalScore" class="value">0</span>
+            
+            <div class="results-panel">
+                <div class="result-card">
+                    <div class="result-icon">📊</div>
+                    <div class="result-content">
+                        <div class="label">COMBAT SCORE</div>
+                        <div id="finalScore" class="value glitch">0</div>
+                    </div>
                 </div>
-                <div class="result-item">
-                    <span class="label">WAVES SURVIVED</span>
-                    <span id="finalWave" class="value">1</span>
+                
+                <div class="result-card">
+                    <div class="result-icon">🌊</div>
+                    <div class="result-content">
+                        <div class="label">WAVE PENETRATION</div>
+                        <div id="finalWave" class="value glitch">1</div>
+                    </div>
+                </div>
+                
+                <div class="result-card">
+                    <div class="result-icon">⏱️</div>
+                    <div class="result-content">
+                        <div class="label">SURVIVAL TIME</div>
+                        <div id="survivalTime" class="value glitch">0:00</div>
+                    </div>
                 </div>
             </div>
+
             <div class="menu-buttons">
-                <button id="restartButton" class="menu-btn pulse">
-                    <span>RETRY MISSION</span>
+                <button id="retryButton" class="menu-btn cyber-button pulse">
+                    <span class="btn-glow"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">⚡</span>
+                        <span class="btn-text">REBOOT SYSTEM</span>
+                    </span>
                 </button>
-                <button id="menuButton" class="menu-btn">
-                    <span>MAIN MENU</span>
+                
+                <button id="menuButton" class="menu-btn cyber-button">
+                    <span class="btn-glow"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">🏠</span>
+                        <span class="btn-text">MAIN TERMINAL</span>
+                    </span>
                 </button>
             </div>
         </div>
 
-        <!-- Game Paused -->
+        <!-- Paused Screen -->
         <div id="paused" class="screen hidden">
             <div class="title-container">
-                <h2>MISSION PAUSED</h2>
+                <h2 class="paused-title glitch" data-text="SYSTEM PAUSED">SYSTEM PAUSED</h2>
+                <div class="title-sub">NEURAL LINK STANDBY</div>
                 <div class="title-glow blue"></div>
             </div>
+
             <div class="menu-buttons">
-                <button id="resumeButton" class="menu-btn pulse">
-                    <span>RESUME</span>
+                <button id="resumeButton" class="menu-btn cyber-button pulse">
+                    <span class="btn-glow"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">▶️</span>
+                        <span class="btn-text">RESUME COMBAT</span>
+                    </span>
                 </button>
-                <button id="quitButton" class="menu-btn">
-                    <span>QUIT</span>
+                
+                <button id="quitButton" class="menu-btn cyber-button">
+                    <span class="btn-glow"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">🚪</span>
+                        <span class="btn-text">TERMINATE MISSION</span>
+                    </span>
+                </button>
+            </div>
+
+            <div class="pause-stats">
+                <div class="stat-display">
+                    <span class="stat-name">CURRENT WAVE</span>
+                    <span id="pausedWave" class="stat-value">1</span>
+                </div>
+                <div class="stat-display">
+                    <span class="stat-name">CURRENT SCORE</span>
+                    <span id="pausedScore" class="stat-value">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Screen -->
+        <div id="controlsScreen" class="screen hidden">
+            <div class="title-container">
+                <h2 class="controls-title glitch" data-text="CONTROL MATRIX">CONTROL MATRIX</h2>
+                <div class="title-sub">NEURAL INTERFACE PROTOCOL</div>
+            </div>
+
+            <div class="controls-grid">
+                <div class="control-group">
+                    <div class="control-item">
+                        <span class="key-badge">W A S D</span>
+                        <span class="action-text">MOVEMENT VECTOR</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key-badge">SPACE</span>
+                        <span class="action-text">PLASMA CANNON</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key-badge">SHIFT</span>
+                        <span class="action-text">QUANTUM DASH</span>
+                    </div>
+                    <div class="control-item">
+                        <span class="key-badge">ESC</span>
+                        <span class="action-text">SYSTEM PAUSE</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-buttons">
+                <button id="backButton" class="menu-btn cyber-button">
+                    <span class="btn-glow"></span>
+                    <span class="btn-content">
+                        <span class="btn-icon">↩️</span>
+                        <span class="btn-text">RETURN TO TERMINAL</span>
+                    </span>
                 </button>
             </div>
         </div>
     </div>
+
     <script src="game.js"></script>
 </body>
 </html>
