@@ -2,16 +2,12 @@ class VoidBreacher {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.gameState = 'menu'; // menu, playing, paused, gameover
+        this.gameState = 'menu'; // menu, playing, gameover
         
         this.resizeCanvas();
         this.setupEventListeners();
         this.resetGame();
-        this.lastTime = 0;
         this.gameLoop();
-        
-        // Draw initial game state
-        this.drawMenu();
     }
 
     resizeCanvas() {
@@ -24,12 +20,8 @@ class VoidBreacher {
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
         document.addEventListener('keyup', (e) => this.handleKeyUp(e));
         
-        // Button events
-        document.getElementById('startBtn').addEventListener('click', () => this.startGame());
-        document.getElementById('pauseBtn').addEventListener('click', () => this.pauseGame());
-        document.getElementById('restartBtn').addEventListener('click', () => this.startGame());
-        document.getElementById('fullscreenBtn').addEventListener('click', () => this.toggleFullscreen());
-        document.getElementById('playAgainBtn').addEventListener('click', () => this.startGame());
+        // Mouse/touch controls
+        this.canvas.addEventListener('click', (e) => this.handleClick(e));
         
         // Window resize
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -58,9 +50,6 @@ class VoidBreacher {
         
         // Create background stars
         this.createStars();
-        
-        this.highScore = parseInt(localStorage.getItem('highScore')) || 0;
-        this.updateUI();
     }
 
     createStars() {
@@ -77,51 +66,10 @@ class VoidBreacher {
     startGame() {
         this.resetGame();
         this.gameState = 'playing';
-        this.hideGameOver();
-        this.updateButtonStates();
-    }
-
-    pauseGame() {
-        if (this.gameState === 'playing') {
-            this.gameState = 'paused';
-        } else if (this.gameState === 'paused') {
-            this.gameState = 'playing';
-        }
-        this.updateButtonStates();
     }
 
     gameOver() {
         this.gameState = 'gameover';
-        this.showGameOver();
-        this.updateButtonStates();
-        
-        if (this.score > this.highScore) {
-            this.highScore = this.score;
-            localStorage.setItem('highScore', this.highScore);
-        }
-    }
-
-    updateButtonStates() {
-        const startBtn = document.getElementById('startBtn');
-        const pauseBtn = document.getElementById('pauseBtn');
-        
-        if (this.gameState === 'playing') {
-            startBtn.classList.add('hidden');
-            pauseBtn.classList.remove('hidden');
-        } else {
-            startBtn.classList.remove('hidden');
-            pauseBtn.classList.add('hidden');
-        }
-    }
-
-    showGameOver() {
-        document.getElementById('finalScore').textContent = this.score;
-        document.getElementById('finalWave').textContent = this.wave;
-        document.getElementById('gameOver').classList.remove('hidden');
-    }
-
-    hideGameOver() {
-        document.getElementById('gameOver').classList.add('hidden');
     }
 
     handleKeyDown(e) {
@@ -132,8 +80,12 @@ class VoidBreacher {
             e.preventDefault();
         }
         
-        if (e.code === 'Escape') {
-            this.pauseGame();
+        if (e.code === 'Enter' && this.gameState === 'menu') {
+            this.startGame();
+        }
+        
+        if (e.code === 'Enter' && this.gameState === 'gameover') {
+            this.startGame();
         }
     }
 
@@ -141,7 +93,41 @@ class VoidBreacher {
         this.keys[e.code] = false;
     }
 
+    handleClick(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        // Menu buttons
+        if (this.gameState === 'menu') {
+            // Start button
+            if (this.isPointInButton(x, y, this.canvas.width/2 - 75, this.canvas.height/2 + 50, 150, 50)) {
+                this.startGame();
+            }
+        }
+        
+        // Game over buttons
+        else if (this.gameState === 'gameover') {
+            // Play again button
+            if (this.isPointInButton(x, y, this.canvas.width/2 - 75, this.canvas.height/2 + 80, 150, 50)) {
+                this.startGame();
+            }
+        }
+        
+        // In-game shooting
+        else if (this.gameState === 'playing') {
+            this.shoot();
+        }
+    }
+
+    isPointInButton(x, y, btnX, btnY, btnWidth, btnHeight) {
+        return x >= btnX && x <= btnX + btnWidth && 
+               y >= btnY && y <= btnY + btnHeight;
+    }
+
     shoot() {
+        if (this.gameState !== 'playing') return;
+        
         this.bullets.push({
             x: this.player.x + this.player.width / 2 - 2,
             y: this.player.y,
@@ -270,16 +256,6 @@ class VoidBreacher {
         }
     }
 
-    updateUI() {
-        document.getElementById('score').textContent = this.score;
-        document.getElementById('wave').textContent = this.wave;
-        document.getElementById('highScore').textContent = this.highScore;
-        
-        const healthPercent = (this.player.health / this.player.maxHealth) * 100;
-        document.getElementById('healthBar').style.width = healthPercent + '%';
-        document.getElementById('healthText').textContent = Math.round(healthPercent) + '%';
-    }
-
     updateWave() {
         this.wave = Math.floor(this.score / 100) + 1;
     }
@@ -294,7 +270,6 @@ class VoidBreacher {
         this.updateParticles();
         this.checkCollisions();
         this.updateWave();
-        this.updateUI();
     }
 
     drawBackground() {
@@ -360,17 +335,100 @@ class VoidBreacher {
         this.ctx.globalAlpha = 1;
     }
 
+    drawUI() {
+        // Score
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.font = '20px Courier New';
+        this.ctx.textAlign = 'left';
+        this.ctx.fillText(`SCORE: ${this.score}`, 20, 40);
+        
+        // Wave
+        this.ctx.fillText(`WAVE: ${this.wave}`, 20, 70);
+        
+        // Health bar
+        const healthPercent = this.player.health / this.player.maxHealth;
+        const barWidth = 200;
+        const barHeight = 20;
+        const barX = this.canvas.width - barWidth - 20;
+        const barY = 30;
+        
+        // Background
+        this.ctx.fillStyle = '#330000';
+        this.ctx.fillRect(barX, barY, barWidth, barHeight);
+        
+        // Health
+        this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : healthPercent > 0.2 ? '#ffff00' : '#ff0000';
+        this.ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+        
+        // Border
+        this.ctx.strokeStyle = '#00ff00';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(barX, barY, barWidth, barHeight);
+        
+        // Health text
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.fillText(`HEALTH: ${Math.round(this.player.health)}%`, barX, barY - 10);
+    }
+
+    drawButton(x, y, width, height, text) {
+        // Button background
+        this.ctx.fillStyle = 'rgba(0, 50, 0, 0.8)';
+        this.ctx.fillRect(x, y, width, height);
+        
+        // Button border
+        this.ctx.strokeStyle = '#00ff00';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(x, y, width, height);
+        
+        // Button text
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.font = 'bold 20px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(text, x + width/2, y + height/2);
+    }
+
     drawMenu() {
         this.drawBackground();
         
-        // Draw title
+        // Title
         this.ctx.fillStyle = '#00ff00';
-        this.ctx.font = 'bold 48px Courier New';
+        this.ctx.font = 'bold 60px Courier New';
         this.ctx.textAlign = 'center';
-        this.ctx.fillText('VOID BREACHER', this.canvas.width / 2, this.canvas.height / 2 - 50);
+        this.ctx.fillText('VOID BREACHER', this.canvas.width / 2, this.canvas.height / 2 - 100);
         
         this.ctx.font = '20px Courier New';
-        this.ctx.fillText('Click START to begin!', this.canvas.width / 2, this.canvas.height / 2 + 20);
+        this.ctx.fillText('SPACE ARCADE SHOOTER', this.canvas.width / 2, this.canvas.height / 2 - 30);
+        
+        // Start button
+        this.drawButton(this.canvas.width/2 - 75, this.canvas.height/2 + 50, 150, 50, 'START GAME');
+        
+        // Controls
+        this.ctx.font = '16px Courier New';
+        this.ctx.fillText('CONTROLS: WASD to move, SPACE to shoot', this.canvas.width / 2, this.canvas.height / 2 + 150);
+        this.ctx.fillText('CLICK START or press ENTER to begin', this.canvas.width / 2, this.canvas.height / 2 + 180);
+    }
+
+    drawGameOver() {
+        this.drawBackground();
+        
+        // Game Over text
+        this.ctx.fillStyle = '#ff0000';
+        this.ctx.font = 'bold 60px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('GAME OVER', this.canvas.width / 2, this.canvas.height / 2 - 100);
+        
+        // Score
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.font = '30px Courier New';
+        this.ctx.fillText(`FINAL SCORE: ${this.score}`, this.canvas.width / 2, this.canvas.height / 2 - 20);
+        this.ctx.fillText(`WAVE REACHED: ${this.wave}`, this.canvas.width / 2, this.canvas.height / 2 + 20);
+        
+        // Play again button
+        this.drawButton(this.canvas.width/2 - 75, this.canvas.height/2 + 80, 150, 50, 'PLAY AGAIN');
+        
+        this.ctx.font = '16px Courier New';
+        this.ctx.fillText('CLICK BUTTON or press ENTER to restart', this.canvas.width / 2, this.canvas.height / 2 + 160);
     }
 
     draw() {
@@ -379,29 +437,21 @@ class VoidBreacher {
         this.drawEnemies();
         this.drawBullets();
         this.drawPlayer();
+        this.drawUI();
     }
 
-    toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-        } else {
-            document.exitFullscreen();
-        }
-    }
-
-    gameLoop(currentTime = 0) {
-        const deltaTime = Math.min((currentTime - this.lastTime) / 16.67, 2.5);
-        this.lastTime = currentTime;
-
-        this.update(deltaTime);
+    gameLoop() {
+        this.update();
         
         if (this.gameState === 'menu') {
             this.drawMenu();
-        } else if (this.gameState === 'playing' || this.gameState === 'paused') {
+        } else if (this.gameState === 'playing') {
             this.draw();
+        } else if (this.gameState === 'gameover') {
+            this.drawGameOver();
         }
         
-        requestAnimationFrame((time) => this.gameLoop(time));
+        requestAnimationFrame(() => this.gameLoop());
     }
 }
 
