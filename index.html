@@ -8,21 +8,111 @@
 </head>
 <body>
     <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- Game UI -->
         <div id="ui">
-            <div id="score">Score: 0</div>
-            <div id="health">Health: 100</div>
-            <div id="dashCooldown">Dash: Ready</div>
+            <div class="ui-section">
+                <div class="stat">
+                    <div class="label">SCORE</div>
+                    <div id="score" class="value">0</div>
+                </div>
+                <div class="stat">
+                    <div class="label">WAVE</div>
+                    <div id="wave" class="value">1</div>
+                </div>
+            </div>
+            
+            <div class="ui-section">
+                <div class="stat">
+                    <div class="label">HEALTH</div>
+                    <div class="health-bar">
+                        <div id="healthBar" class="health-fill"></div>
+                    </div>
+                </div>
+                <div class="stat">
+                    <div class="label">DASH</div>
+                    <div class="dash-container">
+                        <div id="dashCooldown" class="dash-ready">READY</div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        <div id="menu">
-            <h1>VOID BREACHER</h1>
-            <button id="startButton">START GAME</button>
-            <div id="highScore">High Score: 0</div>
+
+        <!-- Main Menu -->
+        <div id="mainMenu" class="screen">
+            <div class="title-container">
+                <h1 class="game-title">VOID BREACHER</h1>
+                <div class="title-glow"></div>
+            </div>
+            <div class="menu-buttons">
+                <button id="startButton" class="menu-btn pulse">
+                    <span>START MISSION</span>
+                </button>
+                <button id="fullscreenButton" class="menu-btn">
+                    <span>FULLSCREEN</span>
+                </button>
+            </div>
+            <div class="high-score">
+                <div class="label">BEST RECORD</div>
+                <div id="highScore" class="value">0</div>
+            </div>
+            <div class="controls">
+                <div class="control-item">
+                    <span class="key">WASD</span>
+                    <span class="action">MOVE</span>
+                </div>
+                <div class="control-item">
+                    <span class="key">SPACE</span>
+                    <span class="action">SHOOT</span>
+                </div>
+                <div class="control-item">
+                    <span class="key">SHIFT</span>
+                    <span class="action">DASH</span>
+                </div>
+            </div>
         </div>
-        <div id="gameOver" class="hidden">
-            <h2>MISSION FAILED</h2>
-            <div id="finalScore">Score: 0</div>
-            <button id="restartButton">TRY AGAIN</button>
+
+        <!-- Game Over Screen -->
+        <div id="gameOver" class="screen hidden">
+            <div class="title-container">
+                <h2 class="game-over-title">MISSION FAILED</h2>
+                <div class="title-glow red"></div>
+            </div>
+            <div class="results">
+                <div class="result-item">
+                    <span class="label">FINAL SCORE</span>
+                    <span id="finalScore" class="value">0</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">WAVES SURVIVED</span>
+                    <span id="finalWave" class="value">1</span>
+                </div>
+            </div>
+            <div class="menu-buttons">
+                <button id="restartButton" class="menu-btn pulse">
+                    <span>RETRY MISSION</span>
+                </button>
+                <button id="menuButton" class="menu-btn">
+                    <span>MAIN MENU</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Paused -->
+        <div id="paused" class="screen hidden">
+            <div class="title-container">
+                <h2>MISSION PAUSED</h2>
+                <div class="title-glow blue"></div>
+            </div>
+            <div class="menu-buttons">
+                <button id="resumeButton" class="menu-btn pulse">
+                    <span>RESUME</span>
+                </button>
+                <button id="quitButton" class="menu-btn">
+                    <span>QUIT</span>
+                </button>
+            </div>
         </div>
     </div>
     <script src="game.js"></script>
