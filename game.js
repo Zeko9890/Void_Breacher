@@ -1,76 +1,5 @@
-class ThreeBackground {
-    constructor() {
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        this.particles = null;
-        
-        this.init();
-        this.animate();
-    }
-
-    init() {
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setClearColor(0x000000, 0);
-        document.getElementById('threeBackground').appendChild(this.renderer.domElement);
-
-        this.camera.position.z = 50;
-        this.createParticles();
-        
-        window.addEventListener('resize', () => this.onWindowResize());
-    }
-
-    createParticles() {
-        const particleCount = 2000;
-        const positions = new Float32Array(particleCount * 3);
-        const colors = new Float32Array(particleCount * 3);
-
-        for (let i = 0; i < particleCount * 3; i += 3) {
-            positions[i] = (Math.random() - 0.5) * 1000;
-            positions[i + 1] = (Math.random() - 0.5) * 1000;
-            positions[i + 2] = (Math.random() - 0.5) * 1000;
-
-            colors[i] = Math.random() * 0.3;
-            colors[i + 1] = Math.random() * 0.5 + 0.3;
-            colors[i + 2] = Math.random() * 0.8 + 0.2;
-        }
-
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        const material = new THREE.PointsMaterial({
-            size: 3,
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.6
-        });
-
-        this.particles = new THREE.Points(geometry, material);
-        this.scene.add(this.particles);
-    }
-
-    onWindowResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    animate() {
-        requestAnimationFrame(() => this.animate());
-
-        if (this.particles) {
-            this.particles.rotation.x += 0.0005;
-            this.particles.rotation.y += 0.001;
-        }
-
-        this.renderer.render(this.scene, this.camera);
-    }
-}
-
 class VoidBreacher {
     constructor() {
-        this.threeBg = new ThreeBackground();
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.gameState = 'menu'; // menu, playing, paused, gameover
@@ -80,6 +9,9 @@ class VoidBreacher {
         this.resetGame();
         this.lastTime = 0;
         this.gameLoop();
+        
+        // Draw initial game state
+        this.drawMenu();
     }
 
     resizeCanvas() {
@@ -117,14 +49,29 @@ class VoidBreacher {
         this.bullets = [];
         this.enemies = [];
         this.particles = [];
+        this.stars = [];
         
         this.keys = {};
         this.score = 0;
         this.wave = 1;
         this.enemySpawnTimer = 0;
         
+        // Create background stars
+        this.createStars();
+        
         this.highScore = parseInt(localStorage.getItem('highScore')) || 0;
         this.updateUI();
+    }
+
+    createStars() {
+        for (let i = 0; i < 100; i++) {
+            this.stars.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                size: Math.random() * 2 + 1,
+                speed: Math.random() * 0.5 + 0.1
+            });
+        }
     }
 
     startGame() {
@@ -253,31 +200,42 @@ class VoidBreacher {
         }
     }
 
+    updateStars() {
+        for (let i = 0; i < this.stars.length; i++) {
+            this.stars[i].y += this.stars[i].speed;
+            if (this.stars[i].y > this.canvas.height) {
+                this.stars[i].y = 0;
+                this.stars[i].x = Math.random() * this.canvas.width;
+            }
+        }
+    }
+
     checkCollisions() {
         // Player Bullets vs Enemies
-        this.bullets.forEach((bullet, bulletIndex) => {
-            this.enemies.forEach((enemy, enemyIndex) => {
-                if (this.checkCollision(bullet, enemy)) {
+        for (let i = this.bullets.length - 1; i >= 0; i--) {
+            for (let j = this.enemies.length - 1; j >= 0; j--) {
+                if (this.checkCollision(this.bullets[i], this.enemies[j])) {
                     this.score += 10;
-                    this.enemies.splice(enemyIndex, 1);
-                    this.bullets.splice(bulletIndex, 1);
-                    this.createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                    this.enemies.splice(j, 1);
+                    this.bullets.splice(i, 1);
+                    this.createExplosion(this.bullets[i].x, this.bullets[i].y);
+                    break;
                 }
-            });
-        });
+            }
+        }
 
         // Player vs Enemies
-        this.enemies.forEach((enemy, enemyIndex) => {
-            if (this.checkCollision(this.player, enemy)) {
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            if (this.checkCollision(this.player, this.enemies[i])) {
                 this.player.health -= 10;
-                this.enemies.splice(enemyIndex, 1);
-                this.createExplosion(enemy.x + enemy.width/2, enemy.y + enemy.height/2);
+                this.enemies.splice(i, 1);
+                this.createExplosion(this.player.x + this.player.width/2, this.player.y);
                 
                 if (this.player.health <= 0) {
                     this.gameOver();
                 }
             }
-        });
+        }
     }
 
     checkCollision(rect1, rect2) {
@@ -332,10 +290,25 @@ class VoidBreacher {
         this.updatePlayer();
         this.updateBullets();
         this.updateEnemies();
+        this.updateStars();
         this.updateParticles();
         this.checkCollisions();
         this.updateWave();
         this.updateUI();
+    }
+
+    drawBackground() {
+        // Draw space background
+        this.ctx.fillStyle = '#000011';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw stars
+        this.ctx.fillStyle = '#ffffff';
+        this.stars.forEach(star => {
+            this.ctx.beginPath();
+            this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
     }
 
     drawPlayer() {
@@ -387,11 +360,21 @@ class VoidBreacher {
         this.ctx.globalAlpha = 1;
     }
 
-    draw() {
-        // Clear canvas with slight transparency for trail effect
-        this.ctx.fillStyle = 'rgba(0, 8, 17, 0.1)';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    drawMenu() {
+        this.drawBackground();
+        
+        // Draw title
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.font = 'bold 48px Courier New';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('VOID BREACHER', this.canvas.width / 2, this.canvas.height / 2 - 50);
+        
+        this.ctx.font = '20px Courier New';
+        this.ctx.fillText('Click START to begin!', this.canvas.width / 2, this.canvas.height / 2 + 20);
+    }
 
+    draw() {
+        this.drawBackground();
         this.drawParticles();
         this.drawEnemies();
         this.drawBullets();
@@ -411,7 +394,13 @@ class VoidBreacher {
         this.lastTime = currentTime;
 
         this.update(deltaTime);
-        this.draw();
+        
+        if (this.gameState === 'menu') {
+            this.drawMenu();
+        } else if (this.gameState === 'playing' || this.gameState === 'paused') {
+            this.draw();
+        }
+        
         requestAnimationFrame((time) => this.gameLoop(time));
     }
 }
